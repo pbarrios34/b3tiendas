@@ -1,0 +1,57 @@
+version: "3"
+services:
+
+  app:
+    user: 1000:1000
+    image: b3tiendas
+    container_name: b3tiendas
+    ports:
+      - 80:80
+      - 443:443
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        APP_ENV: local
+    depends_on:
+      - db
+    volumes:
+      - .:/var/www/html
+    #  - ./infrastructure/supervisor/octane.conf:/etc/supervisor/conf.d/octane.conf
+    # In production the command will use supervisor to manage this
+    # The reason you want to uncomment this during development is because of the --watch and --workers=1
+    # command: php artisan octane:roadrunner --host=0.0.0.0 --rpc-port=6001 --port=8000 --watch --workers=1 --max-requests=500 --log-level=3
+    #env_file:
+    #  - .env
+    environment:
+      CI_ENV: development
+      
+  db:
+    container_name: b3tiendas-mysql
+    image: mariadb:10.6
+    #command: mysqld --default-authentication-plugin=mysql_native_password
+    ports:
+      - 3306:3306
+    expose:
+      - '3306'
+    volumes:
+      - b3tiendas-mysql:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: 'b3tiendas'
+      MYSQL_USER: 'b3tiendas'
+      MYSQL_PASSWORD: 'b3tiendas'
+      MYSQL_ROOT_PASSWORD: 'b3tiendas'
+
+  admin:
+    container_name: b3tiendas-admin
+    image: phpmyadmin
+    ports: 
+      - 8081:80
+    environment:
+      PMA_HOST: db
+      UPLOAD_LIMIT: 100M
+
+
+volumes:
+  b3tiendas-mysql:
+    driver: "local"
